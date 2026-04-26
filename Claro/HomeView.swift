@@ -1,15 +1,15 @@
 import SwiftUI
 import UIKit
 
+    private enum Sheet: Identifiable {
+        case scanner, photoPicker, filePicker, insuranceSetup
+        var id: String { "\(self)" }
+    }
+
 struct HomeView: View {
     @Environment(DocumentStore.self) private var store
-    @State private var showingScanner = false
-    @State private var showingInsuranceSetup = false
+    @State private var activeSheet: Sheet?
     @State private var showingUploadChoice = false
-    @State private var showingPhotoPicker = false
-    @State private var showingFilePicker = false
-    @State private var uploadedImages: [UIImage] = []
-    @State private var showingScanReview = false
 
     var body: some View {
         NavigationStack {
@@ -34,7 +34,7 @@ struct HomeView: View {
             .navigationTitle("Claro")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button { showingInsuranceSetup = true } label: {
+                    Button { activeSheet = .insuranceSetup } label: {
                         Image(systemName: store.insuranceProfile == nil
                               ? "person.crop.circle.badge.plus"
                               : "person.crop.circle.fill")
@@ -45,41 +45,22 @@ struct HomeView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingScanner) { ScanView() }
-        .sheet(isPresented: $showingScanReview, onDismiss: {
-            uploadedImages = []
-        }) {
-            ScanView(preloadedImages: uploadedImages)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .scanner:
+                ScanView()
+            case .photoPicker:
+                UploadFlowView(source: .photos)
+            case .filePicker:
+                UploadFlowView(source: .files)
+            case .insuranceSetup:
+                InsuranceSetupView()
+            }
         }
-        .sheet(isPresented: $showingPhotoPicker) {
-            PhotoLibraryPicker(
-                onPick: { images in
-                    uploadedImages = images
-                    showingPhotoPicker = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                        showingScanReview = true
-                    }
-                },
-                onCancel: { showingPhotoPicker = false }
-            )
-        }
-        .sheet(isPresented: $showingFilePicker) {
-            DocumentFilePicker(
-                onPick: { images in
-                    uploadedImages = images
-                    showingFilePicker = false
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) {
-                        showingScanReview = true
-                    }
-                },
-                onCancel: { showingFilePicker = false }
-            )
-        }
-        .sheet(isPresented: $showingInsuranceSetup) { InsuranceSetupView() }
         .confirmationDialog("Add Document", isPresented: $showingUploadChoice, titleVisibility: .visible) {
-            Button("Scan with Camera") { showingScanner = true }
-            Button("Choose from Photos") { showingPhotoPicker = true }
-            Button("Import from Files") { showingFilePicker = true }
+            Button("Scan with Camera") { activeSheet = .scanner }
+            Button("Choose from Photos") { activeSheet = .photoPicker }
+            Button("Import from Files") { activeSheet = .filePicker }
             Button("Cancel", role: .cancel) {}
         }
     }
@@ -89,9 +70,9 @@ struct HomeView: View {
     @ViewBuilder
     private var insuranceSection: some View {
         if let profile = store.insuranceProfile {
-            InsuranceCard(profile: profile) { showingInsuranceSetup = true }
+            InsuranceCard(profile: profile) { activeSheet = .insuranceSetup }
         } else {
-            InsurancePrompt { showingInsuranceSetup = true }
+            InsurancePrompt { activeSheet = .insuranceSetup }
         }
     }
 
@@ -141,6 +122,15 @@ struct HomeView: View {
                     DocumentRow(document: document)
                 }
                 .buttonStyle(.plain)
+                .contextMenu {
+                    Button(role: .destructive) {
+                        if let index = store.documents.firstIndex(where: { $0.id == document.id }) {
+                            store.deleteDocuments(at: IndexSet(integer: index))
+                        }
+                    } label: {
+                        Label("Delete", systemImage: "trash")
+                    }
+                }
             }
         }
     }
@@ -303,7 +293,10 @@ struct DocumentRow: View {
                     .background(Color.claroWarning.opacity(0.15))
                     .foregroundStyle(Color.claroWarning)
                     .clipShape(Capsule())
-            } else if !(document.analysis?.flaggedIssues.isEmpty ?? true) {
+            } else if document.analysis?.flaggedIssues.contains(where: { $0.severity == .alert }) == true {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(Color.claroDanger)
+            } else if document.analysis?.flaggedIssues.contains(where: { $0.severity == .warning }) == true {
                 Image(systemName: "exclamationmark.circle.fill")
                     .foregroundStyle(Color.claroWarning)
             } else {

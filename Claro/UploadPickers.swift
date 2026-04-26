@@ -4,6 +4,35 @@ import PhotosUI
 import PDFKit
 import UniformTypeIdentifiers
 
+// MARK: - Upload Flow (single sheet: picker → review)
+
+enum UploadSource { case photos, files }
+
+struct UploadFlowView: View {
+    let source: UploadSource
+    @Environment(\.dismiss) private var dismiss
+    @State private var pickedImages: [UIImage] = []
+
+    var body: some View {
+        if pickedImages.isEmpty {
+            switch source {
+            case .photos:
+                PhotoLibraryPicker(
+                    onPick: { pickedImages = $0 },
+                    onCancel: { dismiss() }
+                )
+            case .files:
+                DocumentFilePicker(
+                    onPick: { pickedImages = $0 },
+                    onCancel: { dismiss() }
+                )
+            }
+        } else {
+            ScanView(preloadedImages: pickedImages)
+        }
+    }
+}
+
 // MARK: - Photo Library Picker
 
 struct PhotoLibraryPicker: UIViewControllerRepresentable {
@@ -50,26 +79,37 @@ struct PhotoLibraryPicker: UIViewControllerRepresentable {
 }
 
 // MARK: - File Picker (PDFs + images)
+// Uses a transparent container VC so UIDocumentPickerViewController's auto-dismiss
+// doesn't collapse the SwiftUI sheet — the sheet stays alive for the review transition.
 
 struct DocumentFilePicker: UIViewControllerRepresentable {
     let onPick: ([UIImage]) -> Void
     let onCancel: () -> Void
 
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let types: [UTType] = [.pdf, .image, .jpeg, .png, .heic]
-        let vc = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: true)
-        vc.allowsMultipleSelection = false
-        vc.delegate = context.coordinator
-        return vc
+    func makeUIViewController(context: Context) -> UIViewController {
+        let container = UIViewController()
+        container.view.backgroundColor = .clear
+        return container
     }
 
-    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+    func updateUIViewController(_ container: UIViewController, context: Context) {
+        guard !context.coordinator.hasPresented else { return }
+        context.coordinator.hasPresented = true
+        DispatchQueue.main.async {
+            let types: [UTType] = [.pdf, .image, .jpeg, .png, .heic]
+            let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: true)
+            picker.allowsMultipleSelection = false
+            picker.delegate = context.coordinator
+            container.present(picker, animated: true)
+        }
+    }
 
     func makeCoordinator() -> Coordinator { Coordinator(onPick: onPick, onCancel: onCancel) }
 
     class Coordinator: NSObject, UIDocumentPickerDelegate {
         let onPick: ([UIImage]) -> Void
         let onCancel: () -> Void
+        var hasPresented = false
 
         init(onPick: @escaping ([UIImage]) -> Void, onCancel: @escaping () -> Void) {
             self.onPick = onPick; self.onCancel = onCancel
@@ -99,7 +139,6 @@ struct DocumentFilePicker: UIViewControllerRepresentable {
                         let renderSize = CGSize(width: bounds.width * scale, height: bounds.height * scale)
                         cgCtx.setFillColor(UIColor.white.cgColor)
                         cgCtx.fill(CGRect(origin: .zero, size: renderSize))
-                        // PDF origin is bottom-left; flip to iOS top-left
                         cgCtx.translateBy(x: 0, y: renderSize.height)
                         cgCtx.scaleBy(x: scale, y: -scale)
                         page.draw(with: .mediaBox, to: cgCtx)

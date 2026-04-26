@@ -177,20 +177,20 @@ private struct ScoreChip: View {
     let icon: String
 
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 4) {
+        VStack(spacing: 6) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
                 Image(systemName: icon)
-                    .font(.system(size: 13))
-                    .foregroundStyle(count > 0 ? color : Color.claroSubtle)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(count > 0 ? color : Color.claroSubtle.opacity(0.4))
                 Text("\(count)")
-                    .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(count > 0 ? color : Color.claroSubtle)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(count > 0 ? color : Color.claroSubtle.opacity(0.4))
             }
             Text(label)
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 10, weight: .semibold))
                 .foregroundStyle(Color.claroSubtle)
                 .textCase(.uppercase)
-                .tracking(0.5)
+                .tracking(0.8)
         }
         .frame(maxWidth: .infinity)
     }

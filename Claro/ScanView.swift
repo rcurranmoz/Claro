@@ -6,16 +6,19 @@ struct ScanView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DocumentStore.self) private var store
 
-    @State private var scannedImages: [UIImage]
+    @State private var scannedImages: [UIImage] = []
     @State private var selectedType: DocumentType = .medicalBill
     @State private var isSaving = false
+    private let preloadedImages: [UIImage]
 
     init(preloadedImages: [UIImage] = []) {
-        _scannedImages = State(initialValue: preloadedImages)
+        self.preloadedImages = preloadedImages
     }
 
+    private var activeImages: [UIImage] { scannedImages.isEmpty ? preloadedImages : scannedImages }
+
     var body: some View {
-        if scannedImages.isEmpty {
+        if activeImages.isEmpty {
             DocumentCamera(onScan: { scannedImages = $0 }, onCancel: { dismiss() })
                 .ignoresSafeArea()
         } else {
@@ -29,7 +32,7 @@ struct ScanView: View {
                 Color.claroBackground.ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    if let image = scannedImages.first {
+                    if let image = activeImages.first {
                         Image(uiImage: image)
                             .resizable()
                             .scaledToFit()
@@ -40,7 +43,7 @@ struct ScanView: View {
                             .padding(.top, 16)
                     }
 
-                    Text(scannedImages.count == 1 ? "1 page scanned" : "\(scannedImages.count) pages scanned")
+                    Text(activeImages.count == 1 ? "1 page scanned" : "\(activeImages.count) pages scanned")
                         .font(.system(size: 13))
                         .foregroundStyle(Color.claroSubtle)
                         .padding(.top, 10)
@@ -91,6 +94,8 @@ struct ScanView: View {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Retake") { scannedImages = [] }
                         .foregroundStyle(Color.claroAccent)
+                        .opacity(preloadedImages.isEmpty ? 1 : 0)
+                        .disabled(!preloadedImages.isEmpty)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Cancel") { dismiss() }
@@ -102,7 +107,7 @@ struct ScanView: View {
 
     private func save() {
         isSaving = true
-        let imageData = scannedImages.first?.jpegData(compressionQuality: 0.85)
+        let imageData = activeImages.first?.jpegData(compressionQuality: 0.85)
         var document = HealthDocument(type: selectedType, imageData: imageData)
         document.title = selectedType.rawValue
         store.addDocument(document)
