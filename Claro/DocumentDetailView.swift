@@ -282,12 +282,12 @@ private struct IssueRow: View {
     }
 
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: severityIcon)
                 .font(.system(size: 14))
                 .foregroundStyle(severityColor)
-                .padding(.top, 1)
-            VStack(alignment: .leading, spacing: 3) {
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 4) {
                 Text(issue.title)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
@@ -295,8 +295,10 @@ private struct IssueRow: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.claroSubtle)
                     .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(severityColor.opacity(0.07))
         .clipShape(RoundedRectangle(cornerRadius: 10))
@@ -310,12 +312,12 @@ private struct IssueRow: View {
 private struct PositiveRow: View {
     let finding: PositiveFinding
     var body: some View {
-        HStack(alignment: .top, spacing: 10) {
+        HStack(alignment: .firstTextBaseline, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 14))
                 .foregroundStyle(Color.claroAccent)
-                .padding(.top, 1)
-            VStack(alignment: .leading, spacing: 3) {
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 4) {
                 Text(finding.title)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.white)
@@ -323,8 +325,10 @@ private struct PositiveRow: View {
                     .font(.system(size: 13))
                     .foregroundStyle(Color.claroSubtle)
                     .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.claroAccent.opacity(0.07))
         .clipShape(RoundedRectangle(cornerRadius: 10))
