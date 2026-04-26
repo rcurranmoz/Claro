@@ -20,22 +20,32 @@ struct HomeView: View {
         }
     }
 
+    private var isEmptyFamilyProfile: Bool {
+        store.activeProfileId != nil && filteredDocuments.isEmpty && searchText.isEmpty
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.claroBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 16) {
-                        if store.activeProfileId == nil { insuranceSection }
                         if !store.profiles.isEmpty { profileSwitcher }
-                        if store.activeProfileId == nil { spendingCard }
-                        scanButton
-                        if !filteredDocuments.isEmpty {
-                            documentsSection
-                        } else if searchText.isEmpty {
-                            emptyHint
+
+                        if isEmptyFamilyProfile {
+                            scanButton
+                                .padding(.top, 100)
                         } else {
-                            noResultsHint
+                            if store.activeProfileId == nil { insuranceSection }
+                            if store.activeProfileId == nil { spendingCard }
+                            scanButton
+                            if !filteredDocuments.isEmpty {
+                                documentsSection
+                            } else if searchText.isEmpty {
+                                emptyHint
+                            } else {
+                                noResultsHint
+                            }
                         }
                     }
                     .padding(.horizontal, 20)
