@@ -34,7 +34,7 @@ struct HomeView: View {
 
                         if isEmptyFamilyProfile {
                             scanButton
-                                .padding(.top, 100)
+                                .padding(.top, 220)
                         } else {
                             if store.activeProfileId == nil { insuranceSection }
                             if store.activeProfileId == nil { spendingCard }
