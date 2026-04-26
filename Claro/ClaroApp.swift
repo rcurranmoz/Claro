@@ -9,9 +9,15 @@ import SwiftUI
 
 @main
 struct ClaroApp: App {
+    @State private var store = DocumentStore()
+    private let fhir = FHIRService.shared
+
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environment(store)
+                .environment(fhir)
+                .preferredColorScheme(.dark)
         }
     }
 }

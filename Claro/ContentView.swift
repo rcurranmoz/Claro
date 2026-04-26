@@ -8,17 +8,18 @@
 import SwiftUI
 
 struct ContentView: View {
+    @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if hasSeenOnboarding {
+            HomeView()
+        } else {
+            OnboardingView(onComplete: { hasSeenOnboarding = true })
         }
-        .padding()
     }
 }
 
 #Preview {
     ContentView()
+        .environment(DocumentStore())
 }
