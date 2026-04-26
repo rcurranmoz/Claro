@@ -8,8 +8,10 @@ import UIKit
 
 struct HomeView: View {
     @Environment(DocumentStore.self) private var store
+    @Environment(SubscriptionService.self) private var subscriptions
     @State private var activeSheet: Sheet?
     @State private var showingUploadChoice = false
+    @State private var showingPaywall = false
     @State private var searchText = ""
 
     private var filteredDocuments: [HealthDocument] {
@@ -89,6 +91,7 @@ struct HomeView: View {
                 SettingsView()
             }
         }
+        .sheet(isPresented: $showingPaywall) { PaywallView() }
         .confirmationDialog("Add Document", isPresented: $showingUploadChoice, titleVisibility: .visible) {
             Button("Scan with Camera") { activeSheet = .scanner }
             Button("Choose from Photos") { activeSheet = .photoPicker }
@@ -170,8 +173,15 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
+    private var canScan: Bool {
+        subscriptions.isProUser || store.documents.count < SubscriptionService.freeScansLimit
+    }
+
     private var scanButton: some View {
-        Button { showingUploadChoice = true } label: {
+        Button {
+            if canScan { showingUploadChoice = true }
+            else { showingPaywall = true }
+        } label: {
             HStack(spacing: 16) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)

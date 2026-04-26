@@ -5,9 +5,11 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DocumentStore.self) private var store
     @Environment(AuthService.self) private var auth
+    @Environment(SubscriptionService.self) private var subscriptions
     @AppStorage("biometricLockEnabled") private var biometricLockEnabled = false
     @State private var showingAddProfile = false
     @State private var showingSignOutConfirm = false
+    @State private var showingPaywall = false
     @State private var newName = ""
     @State private var newRelationship = Profile.Relationship.spouse
     @State private var biometricLabel = ""
@@ -75,6 +77,26 @@ struct SettingsView: View {
                     Text("Track documents and spending separately for each person. Swipe to remove.")
                 }
 
+                // Subscription
+                Section("Subscription") {
+                    if subscriptions.isProUser {
+                        Label("Claro Pro — Active", systemImage: "checkmark.seal.fill")
+                            .foregroundStyle(Color.claroAccent)
+                    } else {
+                        let used = store.documents.count
+                        let limit = SubscriptionService.freeScansLimit
+                        LabeledContent("Free scans used", value: "\(min(used, limit)) of \(limit)")
+                        Button("Upgrade to Pro") { showingPaywall = true }
+                            .foregroundStyle(Color.claroAccent)
+                    }
+                    Button {
+                        Task { try? await subscriptions.restore() }
+                    } label: {
+                        Label("Restore Purchases", systemImage: "arrow.clockwise")
+                    }
+                    .foregroundStyle(Color.claroSubtle)
+                }
+
                 // About
                 Section("About") {
                     LabeledContent("App", value: "Claro Lens")
@@ -102,6 +124,7 @@ struct SettingsView: View {
                 }
             }
             .onAppear { detectBiometric() }
+            .sheet(isPresented: $showingPaywall) { PaywallView() }
             .confirmationDialog("Sign out of Claro Lens?", isPresented: $showingSignOutConfirm, titleVisibility: .visible) {
                 Button("Sign Out", role: .destructive) { auth.signOut() }
                 Button("Cancel", role: .cancel) {}
