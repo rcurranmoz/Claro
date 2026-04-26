@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
     private enum Sheet: Identifiable {
-        case scanner, photoPicker, filePicker, insuranceSetup
+        case scanner, photoPicker, filePicker, insuranceSetup, settings
         var id: String { "\(self)" }
     }
 
@@ -10,20 +10,32 @@ struct HomeView: View {
     @Environment(DocumentStore.self) private var store
     @State private var activeSheet: Sheet?
     @State private var showingUploadChoice = false
+    @State private var searchText = ""
+
+    private var filteredDocuments: [HealthDocument] {
+        guard !searchText.isEmpty else { return store.activeDocuments }
+        return store.activeDocuments.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText) ||
+            $0.type.rawValue.localizedCaseInsensitiveContains(searchText)
+        }
+    }
 
     var body: some View {
         NavigationStack {
             ZStack {
                 Color.claroBackground.ignoresSafeArea()
-
                 ScrollView {
                     VStack(spacing: 16) {
                         insuranceSection
+                        if !store.profiles.isEmpty { profileSwitcher }
+                        spendingCard
                         scanButton
-                        if !store.documents.isEmpty {
+                        if !filteredDocuments.isEmpty {
                             documentsSection
-                        } else {
+                        } else if searchText.isEmpty {
                             emptyHint
+                        } else {
+                            noResultsHint
                         }
                     }
                     .padding(.horizontal, 20)
@@ -31,8 +43,16 @@ struct HomeView: View {
                     .padding(.bottom, 40)
                 }
             }
-            .navigationTitle("Claro")
+            .navigationTitle("Claro Lens")
+            .searchable(text: $searchText, prompt: "Search documents")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { activeSheet = .settings } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 17))
+                            .foregroundStyle(Color.claroSubtle)
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { activeSheet = .insuranceSetup } label: {
                         Image(systemName: store.insuranceProfile == nil
@@ -55,6 +75,8 @@ struct HomeView: View {
                 UploadFlowView(source: .files)
             case .insuranceSetup:
                 InsuranceSetupView()
+            case .settings:
+                SettingsView()
             }
         }
         .confirmationDialog("Add Document", isPresented: $showingUploadChoice, titleVisibility: .visible) {
@@ -74,6 +96,68 @@ struct HomeView: View {
         } else {
             InsurancePrompt { activeSheet = .insuranceSetup }
         }
+    }
+
+    private var profileSwitcher: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ProfileChip(
+                    name: "Me", icon: "person.fill", color: .claroAccent,
+                    isActive: store.activeProfileId == nil
+                ) { store.activeProfileId = nil }
+
+                ForEach(store.profiles) { profile in
+                    ProfileChip(
+                        name: profile.name,
+                        icon: profile.relationship.systemImage,
+                        color: profile.relationship.color,
+                        isActive: store.activeProfileId == profile.id
+                    ) { store.activeProfileId = profile.id }
+                }
+            }
+        }
+        .padding(.horizontal, -20)  // bleed past section padding
+        .padding(.leading, 20)
+    }
+
+    private var spendingCard: some View {
+        NavigationLink(destination: SpendingView()) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color.claroWarning.opacity(0.15))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "chart.bar.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(Color.claroWarning)
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("This Year's Spending")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                    let owed = store.totalOwedThisYear
+                    if owed > 0 {
+                        (Text(owed, format: .currency(code: "USD"))
+                            .foregroundStyle(Color.claroWarning)
+                        + Text(" patient responsibility")
+                            .foregroundStyle(Color.claroSubtle))
+                        .font(.system(size: 13))
+                    } else {
+                        Text("Tap to view your spending summary")
+                            .font(.system(size: 13))
+                            .foregroundStyle(Color.claroSubtle)
+                    }
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Color.claroSubtle)
+            }
+            .padding(16)
+            .background(Color.claroSurface)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
     }
 
     private var scanButton: some View {
@@ -111,22 +195,20 @@ struct HomeView: View {
 
     private var documentsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Recent")
+            Text(searchText.isEmpty ? "Recent" : "Results")
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Color.claroSubtle)
                 .textCase(.uppercase)
                 .tracking(0.8)
 
-            ForEach(store.documents) { document in
+            ForEach(filteredDocuments) { document in
                 NavigationLink(destination: DocumentDetailView(documentId: document.id)) {
                     DocumentRow(document: document)
                 }
                 .buttonStyle(.plain)
                 .contextMenu {
                     Button(role: .destructive) {
-                        if let index = store.documents.firstIndex(where: { $0.id == document.id }) {
-                            store.deleteDocuments(at: IndexSet(integer: index))
-                        }
+                        store.deleteDocument(id: document.id)
                     } label: {
                         Label("Delete", systemImage: "trash")
                     }
@@ -146,6 +228,44 @@ struct HomeView: View {
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 48)
+    }
+
+    private var noResultsHint: some View {
+        VStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 34))
+                .foregroundStyle(Color.claroSubtle.opacity(0.4))
+            Text("No results for \"\(searchText)\"")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.claroSubtle)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.top, 48)
+    }
+}
+
+// MARK: - Profile Chip
+
+private struct ProfileChip: View {
+    let name: String
+    let icon: String
+    let color: Color
+    let isActive: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon).font(.system(size: 11))
+                Text(name).font(.system(size: 13, weight: .medium))
+            }
+            .padding(.horizontal, 14).padding(.vertical, 8)
+            .background(isActive ? color : Color.claroSurface)
+            .foregroundStyle(isActive ? .black : color)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(isActive ? Color.clear : color.opacity(0.4), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -281,6 +401,7 @@ struct DocumentRow: View {
                 Text(document.title)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.white)
+                    .lineLimit(1)
                 Text(document.dateScanned.formatted(date: .abbreviated, time: .omitted))
                     .font(.system(size: 12))
                     .foregroundStyle(Color.claroSubtle)

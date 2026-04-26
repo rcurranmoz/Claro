@@ -75,7 +75,6 @@ struct LineItem: Identifiable, Codable {
         code            = try? c.decodeIfPresent(String.self,  forKey: .code)
         rawDescription  = (try? c.decode(String.self, forKey: .rawDescription))         ?? ""
         plainDescription = (try? c.decode(String.self, forKey: .plainDescription))      ?? rawDescription
-        // amount may come as a number or a "$1,234.56" string
         if let d = try? c.decodeIfPresent(Double.self, forKey: .amount) {
             amount = d
         } else if let s = try? c.decodeIfPresent(String.self, forKey: .amount) {
@@ -169,14 +168,28 @@ struct HealthDocument: Identifiable, Codable {
     var imageData: Data?
     var analysis: DocumentAnalysis?
     var title: String
+    var profileId: UUID?
 
     init(type: DocumentType = .other, imageData: Data? = nil) {
         self.id = UUID()
         self.type = type
         self.dateScanned = Date()
         self.imageData = imageData
+        self.profileId = nil
         let month = Date().formatted(.dateTime.month(.abbreviated).year())
         self.title = "\(type.rawValue) · \(month)"
+    }
+
+    // Handles missing profileId from documents saved before profiles were introduced
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id        = try c.decode(UUID.self,         forKey: .id)
+        type      = try c.decode(DocumentType.self, forKey: .type)
+        dateScanned = try c.decode(Date.self,       forKey: .dateScanned)
+        imageData = try? c.decodeIfPresent(Data.self,             forKey: .imageData)
+        analysis  = try? c.decodeIfPresent(DocumentAnalysis.self, forKey: .analysis)
+        title     = (try? c.decode(String.self, forKey: .title)) ?? ""
+        profileId = try? c.decodeIfPresent(UUID.self, forKey: .profileId)
     }
 }
 
@@ -202,4 +215,37 @@ struct InsuranceProfile: Codable {
     }
 
     var deductibleRemaining: Double { max(0, deductibleAnnual - deductibleMet) }
+}
+
+// MARK: - Family Profile
+
+struct Profile: Identifiable, Codable, Equatable {
+    var id: UUID = UUID()
+    var name: String
+    var relationship: Relationship
+
+    enum Relationship: String, Codable, CaseIterable {
+        case spouse  = "Spouse"
+        case child   = "Child"
+        case parent  = "Parent"
+        case other   = "Other"
+
+        var systemImage: String {
+            switch self {
+            case .spouse: return "heart.fill"
+            case .child:  return "figure.and.child.holdinghands"
+            case .parent: return "figure.2"
+            case .other:  return "person.fill"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .spouse: return Color(hex: "F472B6")
+            case .child:  return .mint
+            case .parent: return Color(hex: "818CF8")
+            case .other:  return .claroSubtle
+            }
+        }
+    }
 }

@@ -138,6 +138,61 @@ struct AnalysisService {
         )
     }
 
+    // MARK: - Dispute Letter
+
+    func generateDisputeLetter(for document: HealthDocument, issues: [FlaggedIssue]) async throws -> String {
+        guard let imageData = document.imageData,
+              let image = UIImage(data: imageData) else {
+            throw AnalysisError.noImage
+        }
+        let resized = resizeImage(image, maxDimension: 1568)
+        guard let jpeg = resized.jpegData(compressionQuality: 0.85) else {
+            throw AnalysisError.imageProcessingFailed
+        }
+        let issueList = issues.map { "• \($0.title): \($0.detail)" }.joined(separator: "\n")
+        let prompt = """
+        Based on this medical billing document and the issues listed below, write a professional \
+        dispute letter the patient can send to their provider or insurance company.
+
+        Issues to address:
+        \(issueList)
+
+        Write a complete, ready-to-mail letter. Use placeholders like [YOUR NAME], [YOUR ADDRESS], \
+        [DATE], [PROVIDER/INSURER NAME AND ADDRESS] where the patient must fill in their information. \
+        Be firm but courteous. Reference specific amounts and dates visible in the document. \
+        Cite applicable patient rights and laws where relevant (No Surprises Act, state balance \
+        billing protections, ACA protections). End with a clear request and a deadline for response.
+        """
+        let requestBody: [String: Any] = [
+            "model": model,
+            "max_tokens": 1500,
+            "messages": [[
+                "role": "user",
+                "content": [
+                    ["type": "image", "source": ["type": "base64", "media_type": "image/jpeg",
+                                                  "data": jpeg.base64EncodedString()]],
+                    ["type": "text", "text": prompt]
+                ]
+            ]]
+        ]
+        var request = URLRequest(url: endpoint)
+        request.httpMethod = "POST"
+        request.setValue("application/json",    forHTTPHeaderField: "Content-Type")
+        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01",           forHTTPHeaderField: "anthropic-version")
+        request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            throw AnalysisError.apiError("HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = (json["content"] as? [[String: Any]])?.first,
+              let text = content["text"] as? String else {
+            throw AnalysisError.parseError("Unexpected response shape")
+        }
+        return text
+    }
+
     // MARK: - Private
 
     private func decodeAnalysis(from text: String) throws -> DocumentAnalysis {

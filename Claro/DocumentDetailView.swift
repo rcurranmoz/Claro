@@ -5,6 +5,7 @@ struct DocumentDetailView: View {
     let documentId: UUID
     @Environment(DocumentStore.self) private var store
     @State private var errorMessage: String?
+    @State private var showDisputeLetter = false
 
     private var document: HealthDocument? {
         store.documents.first { $0.id == documentId }
@@ -116,6 +117,31 @@ struct DocumentDetailView: View {
                         VStack(spacing: 14) {
                             ForEach(analysis.lineItems) { item in LineItemRow(item: item) }
                         }
+                    }
+                }
+
+                // Dispute letter — only when there are actionable issues
+                let disputeIssues = analysis.flaggedIssues.filter {
+                    $0.severity == .alert || $0.severity == .warning
+                }
+                if !disputeIssues.isEmpty {
+                    Button {
+                        showDisputeLetter = true
+                    } label: {
+                        Label("Generate Dispute Letter", systemImage: "doc.text.badge.ellipsis")
+                            .font(.system(size: 15, weight: .semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 15)
+                            .background(Color.claroDanger.opacity(0.12))
+                            .foregroundStyle(Color.claroDanger)
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .overlay(RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.claroDanger.opacity(0.3), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 20)
+                    .sheet(isPresented: $showDisputeLetter) {
+                        DisputeLetterView(document: doc, issues: disputeIssues)
                     }
                 }
             }
