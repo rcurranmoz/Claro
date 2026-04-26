@@ -26,9 +26,9 @@ struct HomeView: View {
                 Color.claroBackground.ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 16) {
-                        insuranceSection
+                        if store.activeProfileId == nil { insuranceSection }
                         if !store.profiles.isEmpty { profileSwitcher }
-                        spendingCard
+                        if store.activeProfileId == nil { spendingCard }
                         scanButton
                         if !filteredDocuments.isEmpty {
                             documentsSection
