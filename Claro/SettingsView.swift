@@ -4,8 +4,10 @@ import LocalAuthentication
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(DocumentStore.self) private var store
+    @Environment(AuthService.self) private var auth
     @AppStorage("biometricLockEnabled") private var biometricLockEnabled = false
     @State private var showingAddProfile = false
+    @State private var showingSignOutConfirm = false
     @State private var newName = ""
     @State private var newRelationship = Profile.Relationship.spouse
     @State private var biometricLabel = ""
@@ -76,8 +78,20 @@ struct SettingsView: View {
                 // About
                 Section("About") {
                     LabeledContent("App", value: "Claro Lens")
-                    LabeledContent("Version", value: "1.0 (2)")
+                    LabeledContent("Version", value: "1.0 (4)")
                     LabeledContent("Documents", value: "\(store.documents.count)")
+                    if !auth.displayName.isEmpty {
+                        LabeledContent("Signed in as", value: auth.displayName)
+                    }
+                }
+
+                // Account
+                Section {
+                    Button(role: .destructive) {
+                        showingSignOutConfirm = true
+                    } label: {
+                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                    }
                 }
             }
             .navigationTitle("Settings")
@@ -88,6 +102,12 @@ struct SettingsView: View {
                 }
             }
             .onAppear { detectBiometric() }
+            .confirmationDialog("Sign out of Claro Lens?", isPresented: $showingSignOutConfirm, titleVisibility: .visible) {
+                Button("Sign Out", role: .destructive) { auth.signOut() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Your documents will remain on this device.")
+            }
             .sheet(isPresented: $showingAddProfile) {
                 AddProfileSheet(
                     name: $newName,

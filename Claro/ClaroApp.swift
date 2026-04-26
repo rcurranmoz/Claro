@@ -10,6 +10,7 @@ import SwiftUI
 @main
 struct ClaroApp: App {
     @State private var store = DocumentStore()
+    @State private var auth  = AuthService()
     private let fhir = FHIRService.shared
 
     var body: some Scene {
@@ -17,6 +18,7 @@ struct ClaroApp: App {
             ContentView()
                 .environment(store)
                 .environment(fhir)
+                .environment(auth)
                 .preferredColorScheme(.dark)
         }
     }

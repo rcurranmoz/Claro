@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    @Environment(AuthService.self) private var auth
     @AppStorage("hasSeenOnboarding")    private var hasSeenOnboarding    = false
     @AppStorage("biometricLockEnabled") private var biometricLockEnabled = false
     @State private var isLocked    = true
@@ -9,7 +10,9 @@ struct ContentView: View {
 
     var body: some View {
         Group {
-            if biometricLockEnabled && isLocked {
+            if !auth.isSignedIn {
+                SignInView()
+            } else if biometricLockEnabled && isLocked {
                 LockView { isLocked = false }
             } else if hasSeenOnboarding {
                 HomeView()

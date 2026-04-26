@@ -5,7 +5,7 @@ struct AnalysisService {
     static let shared = AnalysisService()
 
     private var endpoint: URL { Config.workerURL }
-    private let model = "claude-opus-4-7"
+    private let model = "claude-sonnet-4-6"
 
     func analyze(document: HealthDocument) async throws -> DocumentAnalysis {
         guard let imageData = document.imageData,
