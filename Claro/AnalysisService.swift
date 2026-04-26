@@ -4,7 +4,7 @@ import UIKit
 struct AnalysisService {
     static let shared = AnalysisService()
 
-    private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
+    private var endpoint: URL { Config.workerURL }
     private let model = "claude-opus-4-7"
 
     func analyze(document: HealthDocument) async throws -> DocumentAnalysis {
@@ -44,7 +44,7 @@ struct AnalysisService {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(Config.workerSecret, forHTTPHeaderField: "X-Claro-Secret")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
@@ -104,7 +104,7 @@ struct AnalysisService {
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(Config.workerSecret, forHTTPHeaderField: "X-Claro-Secret")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
 
@@ -177,9 +177,9 @@ struct AnalysisService {
         ]
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
-        request.setValue("application/json",    forHTTPHeaderField: "Content-Type")
-        request.setValue(Config.anthropicAPIKey, forHTTPHeaderField: "x-api-key")
-        request.setValue("2023-06-01",           forHTTPHeaderField: "anthropic-version")
+        request.setValue("application/json",   forHTTPHeaderField: "Content-Type")
+        request.setValue(Config.workerSecret,  forHTTPHeaderField: "X-Claro-Secret")
+        request.setValue("2023-06-01",         forHTTPHeaderField: "anthropic-version")
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
