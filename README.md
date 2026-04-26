@@ -42,6 +42,18 @@ Claro Lens is a privacy-first iOS app that acts as your personal health billing 
 
 ---
 
+## 🚀 App Store
+
+App Store listing copy (name, subtitle, keywords, description, screenshot order) lives in [`app-store/listing.md`](app-store/listing.md).
+
+Before submitting:
+- Swap `Config.revenueCatAPIKey` to the production key
+- Add a privacy policy URL to App Store Connect (required for subscriptions)
+- Capture screenshots on a 6.9" device or simulator (iPhone 16 Pro Max)
+- Provide a 1024×1024 app icon PNG (no alpha channel)
+
+---
+
 ## 📁 Project structure
 
 ```
@@ -68,6 +80,9 @@ Claro/
 cloudflare-worker/
 ├── src/index.js             — proxy worker: validates app secret, forwards to Anthropic
 └── wrangler.toml            — Cloudflare Workers config
+
+app-store/
+└── listing.md               — App Store copy: name, subtitle, keywords, description, screenshots
 ```
 
 ---
