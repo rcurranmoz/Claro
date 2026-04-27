@@ -4,6 +4,14 @@
 
 Claro Lens is a privacy-first iOS app that acts as your personal health billing advocate. Photograph a medical bill, EOB, lab result, or insurance card — Claro uses Claude AI to translate every line item into plain English, flag potential billing errors, and tell you exactly what to do next.
 
+<p align="center">
+  <img src="docs/screenshots/home.png" width="200" alt="Home" />
+  <img src="docs/screenshots/scan-review.png" width="200" alt="Scan Review" />
+  <img src="docs/screenshots/analysis-summary.png" width="200" alt="Analysis Summary" />
+  <img src="docs/screenshots/analysis-detail.png" width="200" alt="Analysis Detail" />
+</p>
+<p align="center"><em>Home &nbsp;·&nbsp; Scan &nbsp;·&nbsp; Analysis &nbsp;·&nbsp; Insights</em></p>
+
 ---
 
 ## ✨ Features
