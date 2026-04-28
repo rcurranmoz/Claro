@@ -18,7 +18,7 @@ function extractPageContent() {
     .filter((line) => line.length > 0)
     .join("\n");
 
-  if (text.length > 8000) text = text.slice(0, 8000) + "\n[content truncated]";
+  if (text.length > 20000) text = text.slice(0, 20000) + "\n[content truncated]";
 
   const docType = detectDocType(text, document.title, window.location.href);
 

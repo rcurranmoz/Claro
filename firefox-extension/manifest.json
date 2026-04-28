@@ -9,6 +9,7 @@
     "storage",
     "tabs",
     "<all_urls>",
+    "file:///*",
     "https://claro-proxy.ryanpcurran-01e.workers.dev/*"
   ],
 

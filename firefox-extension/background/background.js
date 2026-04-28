@@ -49,9 +49,27 @@ async function analyzePdf(url) {
   const config = await browser.storage.local.get(["extractorUrl", "workerSecret"]);
 
   if (!config.extractorUrl) {
-    // No extractor configured — fall back to paste state
     throw new Error("THIN_CONTENT");
   }
+
+  // Fetch the PDF bytes locally — background script can reach http, https, and file://
+  let pdfBytes;
+  try {
+    const pdfResponse = await fetch(url);
+    if (!pdfResponse.ok) throw new Error(`HTTP ${pdfResponse.status}`);
+    pdfBytes = await pdfResponse.arrayBuffer();
+  } catch (err) {
+    throw new Error(`Could not fetch PDF: ${err.message}`);
+  }
+
+  // Base64 encode in chunks to avoid stack overflow on large files
+  const bytes = new Uint8Array(pdfBytes);
+  let b64 = "";
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    b64 += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  b64 = btoa(b64);
 
   const response = await fetch(`${config.extractorUrl}/extract`, {
     method: "POST",
@@ -59,7 +77,7 @@ async function analyzePdf(url) {
       "Content-Type": "application/json",
       "X-Claro-Secret": config.workerSecret,
     },
-    body: JSON.stringify({ url }),
+    body: JSON.stringify({ data: b64 }),
   });
 
   if (!response.ok) {
@@ -91,7 +109,7 @@ async function analyzeText(text, docType) {
     },
     body: JSON.stringify({
       model: "claude-sonnet-4-6",
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: SYSTEM_PROMPT,
       messages: [
         {
