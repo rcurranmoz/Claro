@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Claro Lens — Settings</title>
+  <style>
+    :root {
+      --bg:      #070D18;
+      --surface: #0D1525;
+      --surface2:#121E33;
+      --accent:  #2DD4BF;
+      --subtle:  #5A6A7E;
+      --danger:  #F87171;
+      --text:    #E2E8F0;
+      --border:  rgba(255,255,255,0.07);
+      --radius:  10px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .logo-text {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .logo-lens { color: var(--accent); }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--subtle);
+      margin-bottom: 14px;
+    }
+
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 5px;
+    }
+
+    .field-hint {
+      font-size: 11px;
+      color: var(--subtle);
+      margin-bottom: 5px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="url"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 9px 12px;
+      color: var(--text);
+      font-size: 13px;
+      font-family: monospace;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: var(--accent); }
+    input::placeholder { color: var(--subtle); }
+
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      background: var(--accent);
+      color: #070D18;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+
+    .save-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .status {
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status.ok { color: var(--accent); }
+    .status.err { color: var(--danger); }
+
+    .info-card {
+      background: rgba(45,212,191,0.06);
+      border: 1px solid rgba(45,212,191,0.15);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    .info-card p { font-size: 12px; color: var(--text); line-height: 1.6; }
+    .info-card code {
+      font-family: monospace;
+      font-size: 11px;
+      background: rgba(45,212,191,0.1);
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="32" height="32" rx="8" fill="#0D1525"/>
+        <path d="M16 7C11.03 7 7 11.03 7 16C7 20.97 11.03 25 16 25C18.39 25 20.57 24.08 22.2 22.55L20.08 20.43C18.99 21.43 17.57 22 16 22C12.69 22 10 19.31 10 16C10 12.69 12.69 10 16 10C17.57 10 19 10.57 20.08 11.57L22.2 9.45C20.57 7.92 18.39 7 16 7Z" fill="#2DD4BF"/>
+        <path d="M21 14H18V11H14V14H11V18H14V21H18V18H21V14Z" fill="#2DD4BF" opacity="0.6"/>
+      </svg>
+      <span class="logo-text">Claro <span class="logo-lens">Lens</span> — Settings</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Claro Proxy Configuration</div>
+
+      <div class="field">
+        <label for="worker-url">Worker URL</label>
+        <div class="field-hint">Your Cloudflare Worker URL (e.g. <code>https://claro-proxy.yourname.workers.dev</code>)</div>
+        <input type="url" id="worker-url" placeholder="https://claro-proxy.yourname.workers.dev" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div class="field">
+        <label for="worker-secret">App Secret</label>
+        <div class="field-hint">The value of <code>CLARO_APP_SECRET</code> set in your Worker secrets</div>
+        <input type="password" id="worker-secret" placeholder="••••••••••••••••" autocomplete="off" />
+      </div>
+
+      <div class="save-row">
+        <button class="btn-primary" id="save-btn">Save Settings</button>
+        <span class="status" id="status-msg"></span>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <p>
+        The extension talks directly to your own Cloudflare Worker proxy — the same one the iOS app uses.
+        Your Anthropic API key stays in the Worker; only the app secret is stored locally in browser storage.
+        To find your secret, run <code>wrangler secret list</code> in the <code>cloudflare-worker/</code> directory.
+      </p>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "manifest_version": 2,
+  "name": "Claro Lens",
+  "version": "1.0.0",
+  "description": "Analyze medical bills and insurance documents with Claude AI — right in your browser.",
+  "author": "Claro",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "<all_urls>",
+    "https://claro-proxy.ryanpcurran-01e.workers.dev/*"
+  ],
+
+  "browser_action": {
+    "default_icon": {
+      "48": "icons/icon-48.svg",
+      "96": "icons/icon-96.svg"
+    },
+    "default_title": "Claro Lens"
+  },
+  "sidebar_action": {
+    "default_panel": "sidebar/sidebar.html",
+    "default_icon": {
+      "48": "icons/icon-48.svg",
+      "96": "icons/icon-96.svg"
+    },
+    "default_title": "Claro Lens",
+    "open_at_install": false
+  },
+  "background": {
+    "scripts": ["background/background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>", "file:///*"],
+      "js": ["content/content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_ui": {
+    "page": "settings/settings.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "48": "icons/icon-48.svg",
+    "96": "icons/icon-96.svg"
+  }
+}
