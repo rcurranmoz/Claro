@@ -16,6 +16,13 @@ browser.runtime.onMessage.addListener((message, sender) => {
 });
 
 async function handleAnalyzePage(tabId) {
+  const tab = await browser.tabs.get(tabId);
+
+  // PDFs can't be read by content scripts — extract via the PDF service
+  if (isPdfUrl(tab.url)) {
+    return analyzePdf(tab.url);
+  }
+
   let extraction;
   try {
     extraction = await browser.tabs.sendMessage(tabId, { type: "EXTRACT_TEXT" });
@@ -28,6 +35,44 @@ async function handleAnalyzePage(tabId) {
   }
 
   return analyzeText(extraction.text, extraction.docType);
+}
+
+function isPdfUrl(url) {
+  try {
+    return new URL(url).pathname.toLowerCase().endsWith(".pdf");
+  } catch {
+    return false;
+  }
+}
+
+async function analyzePdf(url) {
+  const config = await browser.storage.local.get(["extractorUrl", "workerSecret"]);
+
+  if (!config.extractorUrl) {
+    // No extractor configured — fall back to paste state
+    throw new Error("THIN_CONTENT");
+  }
+
+  const response = await fetch(`${config.extractorUrl}/extract`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Claro-Secret": config.workerSecret,
+    },
+    body: JSON.stringify({ url }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(`PDF extraction failed: ${body.slice(0, 200)}`);
+  }
+
+  const { text } = await response.json();
+  if (!text || text.trim().length < 50) {
+    throw new Error("THIN_CONTENT");
+  }
+
+  return analyzeText(text, "medical document (PDF)");
 }
 
 async function analyzeText(text, docType) {

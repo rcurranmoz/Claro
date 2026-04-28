@@ -161,14 +161,20 @@
       <div class="card-title">Claro Proxy Configuration</div>
 
       <div class="field">
-        <label for="worker-url">Worker URL</label>
-        <div class="field-hint">Your Cloudflare Worker URL (e.g. <code>https://claro-proxy.yourname.workers.dev</code>)</div>
+        <label for="worker-url">Cloudflare Worker URL</label>
+        <div class="field-hint">Your proxy worker URL (e.g. <code>https://claro-proxy.yourname.workers.dev</code>)</div>
         <input type="url" id="worker-url" placeholder="https://claro-proxy.yourname.workers.dev" autocomplete="off" spellcheck="false" />
       </div>
 
       <div class="field">
+        <label for="extractor-url">PDF Extractor URL</label>
+        <div class="field-hint">Your Cloud Run PDF extractor URL — optional, enables automatic PDF analysis</div>
+        <input type="url" id="extractor-url" placeholder="https://claro-pdf-extractor-xxx-uc.a.run.app" autocomplete="off" spellcheck="false" />
+      </div>
+
+      <div class="field">
         <label for="worker-secret">App Secret</label>
-        <div class="field-hint">The value of <code>CLARO_APP_SECRET</code> set in your Worker secrets</div>
+        <div class="field-hint">The value of <code>CLARO_APP_SECRET</code> — shared by the Worker and PDF extractor</div>
         <input type="password" id="worker-secret" placeholder="••••••••••••••••" autocomplete="off" />
       </div>
 
