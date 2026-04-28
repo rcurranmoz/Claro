@@ -2,6 +2,12 @@
   "manifest_version": 2,
   "name": "Claro Lens",
   "version": "1.0.0",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "claro-lens@rcurranmoz",
+      "strict_min_version": "109.0"
+    }
+  },
   "description": "Analyze medical bills and insurance documents with Claude AI — right in your browser.",
   "author": "Claro",
   "permissions": [
