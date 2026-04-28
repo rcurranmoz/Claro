@@ -8,6 +8,10 @@
       "strict_min_version": "109.0"
     }
   },
+  "data_collection_permissions": {
+    "required": [],
+    "optional": []
+  },
   "description": "Analyze medical bills and insurance documents with Claude AI — right in your browser.",
   "author": "Claro",
   "permissions": [
